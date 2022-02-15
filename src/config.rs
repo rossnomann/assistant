@@ -6,7 +6,8 @@ use std::{error::Error, fmt, fs::read_to_string, io::Error as IoError, net::Sock
 #[derive(Clone, Deserialize)]
 pub struct Config {
     pub token: String,
-    pub redis_url: String,
+    pub database_url: String,
+    pub session_url: String,
     pub users: Vec<UserId>,
     pub webhook_address: Option<SocketAddr>,
     pub webhook_path: Option<String>,
