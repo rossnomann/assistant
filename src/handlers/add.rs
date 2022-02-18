@@ -1,5 +1,6 @@
 use crate::{
-    services::{Note, NotesService, NotesServiceError},
+    entities::NoteData,
+    services::{NotesService, NotesServiceError},
     session::SessionBackend,
 };
 use carapax::{
@@ -24,7 +25,7 @@ pub async fn handle(
             AddState::SetMessage
         }
         AddState::SetMessage => {
-            let note = match Note::try_from(message.data) {
+            let note = match NoteData::try_from(message.data) {
                 Ok(note) => note,
                 Err(err) => {
                     api.execute(SendMessage::new(chat_id, err.to_string())).await?;
@@ -34,16 +35,16 @@ pub async fn handle(
             api.execute(SendMessage::new(chat_id, "Send keywords")).await?;
             AddState::SetKeywords(note)
         }
-        AddState::SetKeywords(note) => {
+        AddState::SetKeywords(note_data) => {
             let keywords: Vec<String> = match message.get_text() {
                 Some(text) => text.data.split(' ').map(String::from).collect(),
                 None => {
                     api.execute(SendMessage::new(chat_id, "Done")).await?;
-                    return Ok(AddState::SetKeywords(note).into());
+                    return Ok(AddState::SetKeywords(note_data).into());
                 }
             };
             notes_service
-                .create(&note, keywords)
+                .create(note_data.into_new(keywords))
                 .await
                 .map_err(AddError::CreateNote)?;
             api.execute(SendMessage::new(chat_id, "Done")).await?;
@@ -57,7 +58,7 @@ pub async fn handle(
 pub enum AddState {
     Start,
     SetMessage,
-    SetKeywords(Note),
+    SetKeywords(NoteData),
 }
 
 impl Default for AddState {
