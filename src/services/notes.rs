@@ -35,6 +35,14 @@ impl NotesService {
             .map(NoteInfoList::from)
             .map_err(NotesServiceError::GetList)
     }
+
+    pub async fn remove(&self, id: i32) -> Result<bool, NotesServiceError> {
+        self.client
+            .execute("DELETE FROM notes WHERE id = $1", &[&id])
+            .await
+            .map(|affected_rows| affected_rows != 0)
+            .map_err(NotesServiceError::Remove)
+    }
 }
 
 pub struct NoteInfoList {
@@ -119,6 +127,7 @@ impl From<Row> for NoteInfo {
 pub enum NotesServiceError {
     Create(PgError),
     GetList(PgError),
+    Remove(PgError),
     Serialize(JsonError),
 }
 
@@ -127,7 +136,8 @@ impl fmt::Display for NotesServiceError {
         use self::NotesServiceError::*;
         match self {
             Create(err) => write!(out, "create note: {}", err),
-            GetList(err) => write!(out, "get list: {}", err),
+            GetList(err) => write!(out, "get notes: {}", err),
+            Remove(err) => write!(out, "remove note: {}", err),
             Serialize(err) => write!(out, "can not serialize note: {}", err),
         }
     }
@@ -139,6 +149,7 @@ impl Error for NotesServiceError {
         Some(match self {
             Create(err) => err,
             GetList(err) => err,
+            Remove(err) => err,
             Serialize(err) => err,
         })
     }
