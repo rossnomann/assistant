@@ -1,12 +1,18 @@
-use carapax::types::{Float, MessageData};
+use crate::entities::Keywords;
+use carapax::types::{
+    Float, InlineQueryResult, InlineQueryResultArticle, InlineQueryResultCachedDocument, InlineQueryResultCachedGif,
+    InlineQueryResultCachedPhoto, InlineQueryResultCachedVideo, InlineQueryResultCachedVoice,
+    InlineQueryResultLocation, InputMessageContentText, MessageData,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{Error as JsonError, Value as JsonValue};
 use std::{error::Error, fmt};
+use tokio_postgres::Row;
 
 #[derive(Debug)]
 pub struct NewNote {
     data: NoteData,
-    keywords: Vec<String>,
+    keywords: Keywords,
 }
 
 impl NewNote {
@@ -14,7 +20,7 @@ impl NewNote {
         &self.data
     }
 
-    pub fn keywords(&self) -> &[String] {
+    pub fn keywords(&self) -> &Keywords {
         &self.keywords
     }
 }
@@ -32,15 +38,8 @@ pub enum NoteData {
 }
 
 impl NoteData {
-    pub fn into_new<K, KI>(self, keywords: K) -> NewNote
-    where
-        K: IntoIterator<Item = KI>,
-        KI: Into<String>,
-    {
-        NewNote {
-            data: self,
-            keywords: keywords.into_iter().map(Into::into).collect(),
-        }
+    pub fn into_new(self, keywords: Keywords) -> NewNote {
+        NewNote { data: self, keywords }
     }
 
     pub fn as_json(&self) -> Result<JsonValue, NoteDataError> {
@@ -102,6 +101,69 @@ impl Error for NoteDataError {
             PhotoNotFound => None,
             Serialize(err) => Some(err),
             UnsupportedMessage => None,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Note {
+    id: i32,
+    data: NoteData,
+    keywords: Keywords,
+}
+
+impl TryFrom<Row> for Note {
+    type Error = NoteError;
+
+    fn try_from(row: Row) -> Result<Self, Self::Error> {
+        let data: JsonValue = row.get("data");
+        let keywords: Vec<String> = row.get("keywords");
+        Ok(Self {
+            id: row.get("id"),
+            data: serde_json::from_value(data).map_err(NoteError::Deserialize)?,
+            keywords: Keywords::from(keywords),
+        })
+    }
+}
+
+impl From<Note> for InlineQueryResult {
+    fn from(note: Note) -> Self {
+        let id = format!("{}", note.id);
+        let title = note.keywords.as_string();
+        match note.data {
+            NoteData::Animation { file_id } => InlineQueryResultCachedGif::new(id, file_id).title(title).into(),
+            NoteData::Audio { file_id } => InlineQueryResultCachedDocument::new(id, title, file_id).into(),
+            NoteData::Document { file_id } => InlineQueryResultCachedDocument::new(id, title, file_id).into(),
+            NoteData::Location { latitude, longitude } => {
+                InlineQueryResultLocation::new(id, latitude, longitude, title).into()
+            }
+            NoteData::Photo { file_id } => InlineQueryResultCachedPhoto::new(id, file_id).title(title).into(),
+            NoteData::Text(text) => InlineQueryResultArticle::new(id, title, InputMessageContentText::new(text)).into(),
+            NoteData::Video { file_id } => InlineQueryResultCachedVideo::new(id, file_id, title).into(),
+            NoteData::Voice { file_id } => InlineQueryResultCachedVoice::new(id, file_id, title).into(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum NoteError {
+    Deserialize(JsonError),
+}
+
+impl fmt::Display for NoteError {
+    fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
+        use self::NoteError::*;
+        match self {
+            Deserialize(err) => write!(out, "deserialize note: {}", err),
+        }
+    }
+}
+
+impl Error for NoteError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        use self::NoteError::*;
+        match self {
+            Deserialize(err) => Some(err),
         }
     }
 }

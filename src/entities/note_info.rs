@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use crate::entities::Keywords;
 use tokio_postgres::Row;
 
 const MAX_LIST_ITEM_LEN: usize = 4096;
@@ -52,12 +52,12 @@ impl From<Vec<Row>> for NoteInfoList {
 #[derive(Debug)]
 pub struct NoteInfo {
     id: i32,
-    keywords: Vec<String>,
+    keywords: Keywords,
 }
 
 impl NoteInfo {
     fn as_string(&self) -> String {
-        let mut result = format!(r#"`{}` \- {}"#, self.id, self.keywords.join(" "));
+        let mut result = format!(r#"`{}` \- {}"#, self.id, self.keywords.as_string());
         if result.len() > MAX_LIST_ITEM_LEN {
             result = result.chars().take(MAX_LIST_ITEM_LEN - 3).collect();
             result.push_str("...");
@@ -68,15 +68,10 @@ impl NoteInfo {
 
 impl From<Row> for NoteInfo {
     fn from(row: Row) -> Self {
-        let indexes: HashMap<&str, usize> = row
-            .columns()
-            .iter()
-            .enumerate()
-            .map(|(idx, column)| (column.name(), idx))
-            .collect();
+        let keywords: Vec<String> = row.get("keywords");
         Self {
-            id: row.get(indexes["id"]),
-            keywords: row.get(indexes["keywords"]),
+            id: row.get("id"),
+            keywords: Keywords::from(keywords),
         }
     }
 }
@@ -85,14 +80,13 @@ impl From<Row> for NoteInfo {
 mod tests {
     use super::*;
 
-    fn create_note_info<T, I>(id: i32, keywords: T) -> NoteInfo
+    fn create_note_info<K>(id: i32, keywords: K) -> NoteInfo
     where
-        T: IntoIterator<Item = I>,
-        I: Into<String>,
+        K: Into<Keywords>,
     {
         NoteInfo {
             id,
-            keywords: keywords.into_iter().map(Into::into).collect(),
+            keywords: keywords.into(),
         }
     }
 

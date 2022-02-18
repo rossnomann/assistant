@@ -1,5 +1,5 @@
 use crate::{
-    entities::NoteData,
+    entities::{Keywords, NoteData},
     services::{NotesService, NotesServiceError},
     session::SessionBackend,
 };
@@ -36,8 +36,8 @@ pub async fn handle(
             AddState::SetKeywords(note)
         }
         AddState::SetKeywords(note_data) => {
-            let keywords: Vec<String> = match message.get_text() {
-                Some(text) => text.data.split(' ').map(String::from).collect(),
+            let keywords = match message.get_text() {
+                Some(text) => Keywords::from(text.data.split(' ')),
                 None => {
                     api.execute(SendMessage::new(chat_id, "Done")).await?;
                     return Ok(AddState::SetKeywords(note_data).into());
