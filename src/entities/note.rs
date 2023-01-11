@@ -88,7 +88,7 @@ impl fmt::Display for NoteDataError {
         use self::NoteDataError::*;
         match self {
             PhotoNotFound => write!(out, "could not find photo"),
-            Serialize(err) => write!(out, "serialize note data: {}", err),
+            Serialize(err) => write!(out, "serialize note data: {err}"),
             UnsupportedMessage => write!(out, "can not create note data from provided message"),
         }
     }
@@ -154,7 +154,7 @@ impl fmt::Display for NoteError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         use self::NoteError::*;
         match self {
-            Deserialize(err) => write!(out, "deserialize note: {}", err),
+            Deserialize(err) => write!(out, "deserialize note: {err}"),
         }
     }
 }

@@ -30,8 +30,8 @@ impl fmt::Display for ConfigError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         use self::ConfigError::*;
         match self {
-            Parse(err) => write!(out, "failed to parse config: {}", err),
-            Read(err) => write!(out, "failed to read config: {}", err),
+            Parse(err) => write!(out, "failed to parse config: {err}"),
+            Read(err) => write!(out, "failed to read config: {err}"),
         }
     }
 }

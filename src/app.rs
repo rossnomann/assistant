@@ -117,13 +117,13 @@ impl fmt::Display for AppError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         use self::AppError::*;
         match self {
-            CreateApi(err) => write!(out, "Could not create API client: {}", err),
-            Migrate(err) => write!(out, "Migration error: {}", err),
+            CreateApi(err) => write!(out, "Could not create API client: {err}"),
+            Migrate(err) => write!(out, "Migration error: {err}"),
             NoConfig => write!(out, "Path to configuration file is not provided"),
-            PgConnect(err) => write!(out, "PostgreSQL: {}", err),
-            ReadConfig(err) => write!(out, "{}", err),
-            Redis(err) => write!(out, "Redis connection error: {}", err),
-            StartServer(err) => write!(out, "Could not start server for webhooks: {}", err),
+            PgConnect(err) => write!(out, "PostgreSQL: {err}"),
+            ReadConfig(err) => write!(out, "{err}"),
+            Redis(err) => write!(out, "Redis connection error: {err}"),
+            StartServer(err) => write!(out, "Could not start server for webhooks: {err}"),
         }
     }
 }

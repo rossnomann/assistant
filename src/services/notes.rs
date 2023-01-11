@@ -67,12 +67,12 @@ impl fmt::Display for NotesServiceError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         use self::NotesServiceError::*;
         match self {
-            Create(err) => write!(out, "create note: {}", err),
-            GetList(err) => write!(out, "get notes: {}", err),
-            MapNote(err) => write!(out, "map note: {}", err),
-            Query(err) => write!(out, "query notes: {}", err),
-            Remove(err) => write!(out, "remove note: {}", err),
-            Serialize(err) => write!(out, "can not serialize note: {}", err),
+            Create(err) => write!(out, "create note: {err}"),
+            GetList(err) => write!(out, "get notes: {err}"),
+            MapNote(err) => write!(out, "map note: {err}"),
+            Query(err) => write!(out, "query notes: {err}"),
+            Remove(err) => write!(out, "remove note: {err}"),
+            Serialize(err) => write!(out, "can not serialize note: {err}"),
         }
     }
 }
