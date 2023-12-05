@@ -9,7 +9,7 @@ Make sure that you have installed PostgreSQL and Redis.
 Download binary:
 
 ```sh
-$ curl -L https://github.com/rossnomann/assistant/releases/download/0.1.0/assistant-0.2.0_x86_64-linux-gnu --output assistant
+$ curl -L https://github.com/rossnomann/assistant/releases/download/0.2.0/assistant-0.2.0_x86_64-linux-gnu --output assistant
 $ chmod +x assistant
 ```
 
