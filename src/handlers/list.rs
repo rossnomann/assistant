@@ -1,19 +1,22 @@
-use crate::services::{NotesService, NotesServiceError};
-use carapax::{
-    methods::SendMessage,
-    types::{Message, ParseMode},
-    Api, ExecuteError, Ref,
-};
 use std::{error::Error, fmt};
 
-pub async fn handle(api: Ref<Api>, notes_service: Ref<NotesService>, message: Message) -> Result<(), ListError> {
-    let chat_id = message.get_chat_id();
+use carapax::{
+    api::{Client, ExecuteError},
+    types::{Message, ParseMode, SendMessage},
+    Ref,
+};
+
+use crate::services::{NotesService, NotesServiceError};
+
+pub async fn handle(client: Ref<Client>, notes_service: Ref<NotesService>, message: Message) -> Result<(), ListError> {
+    let chat_id = message.chat.get_id();
     let items: Vec<String> = notes_service.get_list().await.map_err(ListError::GetNotes)?.collect();
     if items.is_empty() {
-        api.execute(SendMessage::new(chat_id, "There are no items")).await?;
+        client.execute(SendMessage::new(chat_id, "There are no items")).await?;
     } else {
         for item in items {
-            api.execute(SendMessage::new(chat_id, item).parse_mode(ParseMode::MarkdownV2))
+            client
+                .execute(SendMessage::new(chat_id, item).with_parse_mode(ParseMode::MarkdownV2))
                 .await?;
         }
     }

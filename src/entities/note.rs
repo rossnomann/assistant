@@ -1,13 +1,15 @@
-use crate::entities::Keywords;
+use std::{error::Error, fmt};
+
 use carapax::types::{
     Float, InlineQueryResult, InlineQueryResultArticle, InlineQueryResultCachedDocument, InlineQueryResultCachedGif,
     InlineQueryResultCachedPhoto, InlineQueryResultCachedVideo, InlineQueryResultCachedVoice,
-    InlineQueryResultLocation, InputMessageContentText, MessageData,
+    InlineQueryResultLocation, MessageData,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Error as JsonError, Value as JsonValue};
-use std::{error::Error, fmt};
 use tokio_postgres::Row;
+
+use crate::entities::Keywords;
 
 #[derive(Debug)]
 pub struct NewNote {
@@ -55,22 +57,31 @@ impl TryFrom<MessageData> for NoteData {
             MessageData::Animation(animation) => Self::Animation {
                 file_id: animation.file_id,
             },
-            MessageData::Audio { data, .. } => Self::Audio { file_id: data.file_id },
-            MessageData::Document { data, .. } => Self::Document { file_id: data.file_id },
+            MessageData::Audio(audio) => Self::Audio {
+                file_id: audio.data.file_id,
+            },
+            MessageData::Document(document) => Self::Document {
+                file_id: document.data.file_id,
+            },
             MessageData::Location(location) => Self::Location {
                 latitude: location.latitude,
                 longitude: location.longitude,
             },
-            MessageData::Photo { data, .. } => Self::Photo {
-                file_id: data
+            MessageData::Photo(photo) => Self::Photo {
+                file_id: photo
+                    .data
                     .into_iter()
                     .max_by(|x, y| (x.width, x.height).cmp(&(y.width, y.height)))
                     .map(|x| x.file_id)
                     .ok_or(NoteDataError::PhotoNotFound)?,
             },
             MessageData::Text(text) => Self::Text(text.data),
-            MessageData::Video { data, .. } => Self::Video { file_id: data.file_id },
-            MessageData::Voice { data, .. } => Self::Voice { file_id: data.file_id },
+            MessageData::Video(video) => Self::Video {
+                file_id: video.data.file_id,
+            },
+            MessageData::Voice(voice) => Self::Voice {
+                file_id: voice.data.file_id,
+            },
             _ => return Err(NoteDataError::UnsupportedMessage),
         })
     }
@@ -131,16 +142,16 @@ impl From<Note> for InlineQueryResult {
         let id = format!("{}", note.id);
         let title = note.keywords.as_string();
         match note.data {
-            NoteData::Animation { file_id } => InlineQueryResultCachedGif::new(id, file_id).title(title).into(),
-            NoteData::Audio { file_id } => InlineQueryResultCachedDocument::new(id, title, file_id).into(),
-            NoteData::Document { file_id } => InlineQueryResultCachedDocument::new(id, title, file_id).into(),
+            NoteData::Animation { file_id } => InlineQueryResultCachedGif::new(file_id, id).with_title(title).into(),
+            NoteData::Audio { file_id } => InlineQueryResultCachedDocument::new(file_id, id, title).into(),
+            NoteData::Document { file_id } => InlineQueryResultCachedDocument::new(file_id, id, title).into(),
             NoteData::Location { latitude, longitude } => {
                 InlineQueryResultLocation::new(id, latitude, longitude, title).into()
             }
-            NoteData::Photo { file_id } => InlineQueryResultCachedPhoto::new(id, file_id).title(title).into(),
-            NoteData::Text(text) => InlineQueryResultArticle::new(id, title, InputMessageContentText::new(text)).into(),
-            NoteData::Video { file_id } => InlineQueryResultCachedVideo::new(id, file_id, title).into(),
-            NoteData::Voice { file_id } => InlineQueryResultCachedVoice::new(id, file_id, title).into(),
+            NoteData::Photo { file_id } => InlineQueryResultCachedPhoto::new(id, file_id).with_title(title).into(),
+            NoteData::Text(text) => InlineQueryResultArticle::new(id, text, title).into(),
+            NoteData::Video { file_id } => InlineQueryResultCachedVideo::new(id, title, file_id).into(),
+            NoteData::Voice { file_id } => InlineQueryResultCachedVoice::new(id, title, file_id).into(),
         }
     }
 }

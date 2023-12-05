@@ -1,15 +1,25 @@
+use std::{error::Error, fmt};
+
+use carapax::{
+    api::{Client, ExecuteError},
+    types::{AnswerInlineQuery, InlineQuery, InlineQueryResult},
+    Ref,
+};
+
 use crate::{
     entities::Keywords,
     services::{NotesService, NotesServiceError},
 };
-use carapax::{methods::AnswerInlineQuery, types::InlineQuery, Api, ExecuteError, Ref};
-use std::{error::Error, fmt};
 
-pub async fn handle(api: Ref<Api>, notes_service: Ref<NotesService>, input: InlineQuery) -> Result<(), QueryError> {
+pub async fn handle(
+    client: Ref<Client>,
+    notes_service: Ref<NotesService>,
+    input: InlineQuery,
+) -> Result<(), QueryError> {
     let keywords = Keywords::from(input.query.split(' '));
     let notes = notes_service.query(keywords).await.map_err(QueryError::QueryNotes)?;
-    let results = notes.into_iter().map(Into::into).collect();
-    api.execute(AnswerInlineQuery::new(input.id, results)).await?;
+    let results: Vec<InlineQueryResult> = notes.into_iter().map(Into::into).collect();
+    client.execute(AnswerInlineQuery::new(input.id, results)).await?;
     Ok(())
 }
 

@@ -9,14 +9,14 @@ Make sure that you have installed PostgreSQL and Redis.
 Download binary:
 
 ```sh
-$ curl -L https://github.com/rossnomann/assistant/releases/download/0.1.0/assistant-0.1.0_x86_64-linux-gnu --output assistant
+$ curl -L https://github.com/rossnomann/assistant/releases/download/0.1.0/assistant-0.2.0_x86_64-linux-gnu --output assistant
 $ chmod +x assistant
 ```
 
 Create `config.yaml`:
 
 ```yaml
-token: 'bottoken'  # Token from BotFather
+token: 'bot-token'  # Token from BotFather
 database_url: postgresql://user:password@localhost:5432/database  # PostgreSQL connection
 session_url: redis://127.0.0.1:6379  # Redis connection
 users:  # ID of users who has access to this bot
@@ -40,6 +40,14 @@ $ ./assistant config.yaml start
 ````
 
 # Changelog
+
+## 0.2.0 (05.12.2023)
+
+- Updated carapax to 0.13.
+- Updated clap to 4.4.
+- dotenv replaced by dotenvy.
+- Updated redis to 0.23.
+- Updated tokio to 1.34.
 
 ## 0.1.0 (18.02.2022)
 

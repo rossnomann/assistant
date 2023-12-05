@@ -1,45 +1,47 @@
+use std::{error::Error, fmt};
+
+use carapax::{
+    api::{Client, ExecuteError},
+    dialogue::{DialogueInput, DialogueResult, DialogueState},
+    types::{ChatPeerId, Message, SendMessage},
+    Ref,
+};
+use serde::{Deserialize, Serialize};
+
 use crate::{
     entities::{Keywords, NoteData},
     services::{NotesService, NotesServiceError},
     session::SessionBackend,
 };
-use carapax::{
-    dialogue::{DialogueInput, DialogueResult, DialogueState},
-    methods::SendMessage,
-    types::{ChatId, Message},
-    Api, ExecuteError, Ref,
-};
-use serde::{Deserialize, Serialize};
-use std::{error::Error, fmt};
 
 pub async fn handle(
-    api: Ref<Api>,
+    client: Ref<Client>,
     notes_service: Ref<NotesService>,
-    chat_id: ChatId,
+    chat_id: ChatPeerId,
     input: DialogueInput<AddState, SessionBackend>,
     message: Message,
 ) -> Result<DialogueResult<AddState>, AddError> {
     Ok(match input.state {
         AddState::Start => {
-            api.execute(SendMessage::new(chat_id, "Send any message")).await?;
+            client.execute(SendMessage::new(chat_id, "Send any message")).await?;
             AddState::SetMessage
         }
         AddState::SetMessage => {
             let note = match NoteData::try_from(message.data) {
                 Ok(note) => note,
                 Err(err) => {
-                    api.execute(SendMessage::new(chat_id, err.to_string())).await?;
+                    client.execute(SendMessage::new(chat_id, err.to_string())).await?;
                     return Ok(AddState::SetMessage.into());
                 }
             };
-            api.execute(SendMessage::new(chat_id, "Send keywords")).await?;
+            client.execute(SendMessage::new(chat_id, "Send keywords")).await?;
             AddState::SetKeywords(note)
         }
         AddState::SetKeywords(note_data) => {
             let keywords = match message.get_text() {
                 Some(text) => Keywords::from(text.data.split(' ')),
                 None => {
-                    api.execute(SendMessage::new(chat_id, "Done")).await?;
+                    client.execute(SendMessage::new(chat_id, "Done")).await?;
                     return Ok(AddState::SetKeywords(note_data).into());
                 }
             };
@@ -47,24 +49,19 @@ pub async fn handle(
                 .create(note_data.into_new(keywords))
                 .await
                 .map_err(AddError::CreateNote)?;
-            api.execute(SendMessage::new(chat_id, "Done")).await?;
+            client.execute(SendMessage::new(chat_id, "Done")).await?;
             return Ok(DialogueResult::Exit);
         }
     }
     .into())
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub enum AddState {
+    #[default]
     Start,
     SetMessage,
     SetKeywords(NoteData),
-}
-
-impl Default for AddState {
-    fn default() -> Self {
-        AddState::Start
-    }
 }
 
 impl DialogueState for AddState {

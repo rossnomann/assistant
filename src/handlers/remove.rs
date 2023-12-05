@@ -1,18 +1,18 @@
-use crate::services::NotesServiceError;
-use carapax::{
-    methods::SendMessage,
-    types::{ChatId, Command},
-    Api, ExecuteError, Ref,
-};
 use std::{error::Error, fmt};
 
-use crate::services::NotesService;
+use carapax::{
+    api::{Client, ExecuteError},
+    types::{ChatPeerId, Command, SendMessage},
+    Ref,
+};
+
+use crate::services::{NotesService, NotesServiceError};
 
 pub async fn handle(
-    api: Ref<Api>,
+    client: Ref<Client>,
     notes_service: Ref<NotesService>,
     command: Command,
-    chat_id: ChatId,
+    chat_id: ChatPeerId,
 ) -> Result<(), RemoveError> {
     let text = match command.get_args().first().map(|value| value.parse()).transpose() {
         Ok(Some(note_id)) => {
@@ -25,7 +25,7 @@ pub async fn handle(
         Ok(None) => "Note ID is required",
         Err(_) => "Note ID is not an integer",
     };
-    api.execute(SendMessage::new(chat_id, text)).await?;
+    client.execute(SendMessage::new(chat_id, text)).await?;
     Ok(())
 }
 

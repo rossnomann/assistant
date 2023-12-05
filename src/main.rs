@@ -1,5 +1,6 @@
+use dotenvy::dotenv;
+
 use assistant::run;
-use dotenv::dotenv;
 
 #[tokio::main]
 async fn main() {

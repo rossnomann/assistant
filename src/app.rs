@@ -1,23 +1,24 @@
+use std::{error::Error, fmt, io::Error as IoError, sync::Arc};
+
+use carapax::{
+    access::{AccessExt, AccessRule, InMemoryAccessPolicy},
+    api::{Client, ClientError},
+    handler::{LongPoll, WebhookServer},
+    session::SessionManager,
+    App, Context,
+};
+use clap::{Parser, Subcommand};
+use redis::RedisError;
+use refinery::Error as MigrationError;
+use tokio::spawn;
+use tokio_postgres::{connect as pg_connect, Client as PgClient, Error as PgError, NoTls as PgNoTls};
+
 use crate::{
     config::{Config, ConfigError},
     handlers, migrations,
     services::NotesService,
     session::create_session_backend,
 };
-use carapax::{
-    access::{AccessExt, AccessRule, InMemoryAccessPolicy},
-    longpoll::LongPoll,
-    session::SessionManager,
-    webhook,
-    webhook::HyperError,
-    Api, ApiError, App, Context,
-};
-use clap::{Parser, Subcommand};
-use redis::RedisError;
-use refinery::Error as MigrationError;
-use std::{error::Error, fmt, sync::Arc};
-use tokio::spawn;
-use tokio_postgres::{connect as pg_connect, Client as PgClient, Error as PgError, NoTls as PgNoTls};
 
 #[derive(Parser)]
 #[clap(about, author, version)]
@@ -70,7 +71,7 @@ async fn start(config: Config, pg_client: PgClient) -> Result<(), AppError> {
     let access_rules: Vec<_> = config.users.into_iter().map(AccessRule::allow_user).collect();
     let admin_policy = InMemoryAccessPolicy::from(access_rules);
 
-    let api = Api::new(&config.token).map_err(AppError::CreateApi)?;
+    let client = Client::new(&config.token).map_err(AppError::CreateApiClient)?;
 
     let session_backend = create_session_backend(config.session_url)
         .await
@@ -79,23 +80,24 @@ async fn start(config: Config, pg_client: PgClient) -> Result<(), AppError> {
     let session_manager = SessionManager::new(session_backend);
 
     let mut context = Context::default();
-    context.insert(api.clone());
+    context.insert(client.clone());
     context.insert(session_manager);
     context.insert(NotesService::new(pg_client));
 
-    let chain = handlers::setup().access(admin_policy);
+    let chain = handlers::setup().with_access_policy(admin_policy);
 
     let app = App::new(context, chain);
 
     match config.webhook_address {
         Some(address) => {
             let path = config.webhook_path.unwrap_or_else(|| String::from("/"));
-            webhook::run_server(address, path, app)
+            WebhookServer::new(path, app)
+                .run(address)
                 .await
                 .map_err(AppError::StartServer)?;
         }
         None => {
-            LongPoll::new(api, app).run().await;
+            LongPoll::new(client, app).run().await;
         }
     }
 
@@ -104,20 +106,20 @@ async fn start(config: Config, pg_client: PgClient) -> Result<(), AppError> {
 
 #[derive(Debug)]
 pub enum AppError {
-    CreateApi(ApiError),
+    CreateApiClient(ClientError),
     Migrate(MigrationError),
     NoConfig,
     PgConnect(PgError),
     ReadConfig(ConfigError),
     Redis(RedisError),
-    StartServer(HyperError),
+    StartServer(IoError),
 }
 
 impl fmt::Display for AppError {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         use self::AppError::*;
         match self {
-            CreateApi(err) => write!(out, "Could not create API client: {err}"),
+            CreateApiClient(err) => write!(out, "Could not create API client: {err}"),
             Migrate(err) => write!(out, "Migration error: {err}"),
             NoConfig => write!(out, "Path to configuration file is not provided"),
             PgConnect(err) => write!(out, "PostgreSQL: {err}"),
@@ -132,7 +134,7 @@ impl Error for AppError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         use self::AppError::*;
         Some(match self {
-            CreateApi(err) => err,
+            CreateApiClient(err) => err,
             Migrate(err) => err,
             NoConfig => return None,
             PgConnect(err) => err,

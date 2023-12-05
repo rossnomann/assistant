@@ -1,5 +1,6 @@
-use crate::session::SessionBackend;
 use carapax::{dialogue::DialogueExt, Chain, CommandExt, CommandPredicate};
+
+use crate::session::SessionBackend;
 
 mod add;
 mod list;
@@ -8,8 +9,8 @@ mod remove;
 
 pub fn setup() -> Chain {
     Chain::once()
-        .add(query::handle)
-        .add(list::handle.command("/list"))
-        .add(remove::handle.command("/remove"))
-        .add(add::handle.dialogue::<SessionBackend>(CommandPredicate::new("/add")))
+        .with(query::handle)
+        .with(list::handle.with_command("/list"))
+        .with(remove::handle.with_command("/remove"))
+        .with(add::handle.with_dialogue::<SessionBackend>(CommandPredicate::new("/add")))
 }
