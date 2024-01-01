@@ -1,19 +1,19 @@
 [package]
 name = "assistant"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 
 [dependencies]
 barrel = { version = "0.7.0", features = ["pg"] }
-carapax = { version = "0.13.0", features = ["access", "dialogue", "session-redis", "webhook"] }
-clap = { version = "4.4.11", features = ["derive"] }
+carapax = { version = "0.14.0", features = ["access", "dialogue", "session-redis", "webhook"] }
+clap = { version = "4.4.12", features = ["derive"] }
 dotenvy = "0.15.7"
 env_logger = "0.10.1"
 log = "0.4.20"
-redis = { version = "0.23.3", features = ["aio", "connection-manager", "tokio-comp"] }
+redis = { version = "0.24.0", features = ["aio", "connection-manager", "tokio-comp"] }
 refinery = { version = "0.8.11", features = ["tokio-postgres"] }
 serde = "1.0.193"
-serde_json = "1.0.108"
-serde_yaml = "0.9.27"
-tokio = { version = "1.34.0", features = ["macros", "rt-multi-thread"] }
+serde_json = "1.0.109"
+serde_yaml = "0.9.29"
+tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
 tokio-postgres = { version = "0.7.10", features = ["with-serde_json-1"] }

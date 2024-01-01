@@ -9,7 +9,7 @@ Make sure that you have installed PostgreSQL and Redis.
 Download binary:
 
 ```sh
-$ curl -L https://github.com/rossnomann/assistant/releases/download/0.2.0/assistant-0.2.0_x86_64-linux-gnu --output assistant
+$ curl -L https://github.com/rossnomann/assistant/releases/download/0.3.0/assistant-0.3.0_x86_64-linux-gnu --output assistant
 $ chmod +x assistant
 ```
 
@@ -40,6 +40,12 @@ $ ./assistant config.yaml start
 ````
 
 # Changelog
+
+## 0.3.0 (01.01.2023)
+
+- Updated carapax to 0.14.
+- Updated redis to 0.24.
+- Updated tokio to 1.35.
 
 ## 0.2.0 (05.12.2023)
 
