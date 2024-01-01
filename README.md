@@ -41,7 +41,7 @@ $ ./assistant config.yaml start
 
 # Changelog
 
-## 0.3.0 (01.01.2023)
+## 0.3.0 (01.01.2024)
 
 - Updated carapax to 0.14.
 - Updated redis to 0.24.
