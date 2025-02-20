@@ -1,17 +1,17 @@
 use std::{error::Error, fmt, io::Error as IoError, sync::Arc};
 
 use carapax::{
+    App, Context,
     access::{AccessExt, AccessRule, InMemoryAccessPolicy},
     api::{Client, ClientError},
     handler::{LongPoll, WebhookServer},
     session::SessionManager,
-    App, Context,
 };
 use clap::{Parser, Subcommand};
 use redis::RedisError;
 use refinery::Error as MigrationError;
 use tokio::spawn;
-use tokio_postgres::{connect as pg_connect, Client as PgClient, Error as PgError, NoTls as PgNoTls};
+use tokio_postgres::{Client as PgClient, Error as PgError, NoTls as PgNoTls, connect as pg_connect};
 
 use crate::{
     config::{Config, ConfigError},

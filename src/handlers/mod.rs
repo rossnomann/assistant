@@ -1,4 +1,4 @@
-use carapax::{dialogue::DialogueExt, Chain, CommandExt, CommandPredicate};
+use carapax::{Chain, CommandExt, CommandPredicate, dialogue::DialogueExt};
 
 use crate::session::SessionBackend;
 

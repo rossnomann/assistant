@@ -1,5 +1,5 @@
-use carapax::session::{backend::redis::RedisBackend, SessionCollector};
-use redis::{aio::ConnectionManager, Client, IntoConnectionInfo, RedisError};
+use carapax::session::{SessionCollector, backend::redis::RedisBackend};
+use redis::{Client, IntoConnectionInfo, RedisError, aio::ConnectionManager};
 use std::time::Duration;
 
 const SESSION_NAMESPACE: &str = "tg-assistant-bot";

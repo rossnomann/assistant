@@ -1,10 +1,10 @@
 use std::{error::Error, fmt};
 
 use carapax::{
+    Ref,
     api::{Client, ExecuteError},
     dialogue::{DialogueInput, DialogueResult, DialogueState},
     types::{ChatPeerId, Message, SendMessage},
-    Ref,
 };
 use serde::{Deserialize, Serialize};
 

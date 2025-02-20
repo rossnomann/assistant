@@ -1,9 +1,9 @@
 use std::{error::Error, fmt};
 
 use carapax::{
+    Ref,
     api::{Client, ExecuteError},
     types::{AnswerInlineQuery, InlineQuery, InlineQueryResult},
-    Ref,
 };
 
 use crate::{

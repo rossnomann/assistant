@@ -1,9 +1,9 @@
 use std::{error::Error, fmt};
 
 use carapax::{
+    Ref,
     api::{Client, ExecuteError},
     types::{Message, ParseMode, SendMessage},
-    Ref,
 };
 
 use crate::services::{NotesService, NotesServiceError};

@@ -1,4 +1,4 @@
-use barrel::{backend::Pg, types, Migration};
+use barrel::{Migration, backend::Pg, types};
 
 macro_rules! version {
     ($builder:ident) => {
